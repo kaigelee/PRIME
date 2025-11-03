@@ -116,31 +116,31 @@ import numpy as np
 
 def SELECTCANDIDATE(P, SP):
     """
-    论文1-86节Pareto-based candidate selection的二值指标适配实现
+    Implementation of Pareto-based candidate selection (Section 1-86 of the paper) adapted for binary metrics
     Input:
-        P: 候选池，列表，每个元素为候选提示（字符串形式，描述提示核心逻辑）
-        SP: 二值结果矩阵，numpy数组，shape=(len(P), len(实例集))，SP[k][i] ∈ {0,1}（0=错误，1=正确）
+        P: Candidate pool, list where each element is a candidate prompt (string describing core logic of the prompt)
+        SP: Binary result matrix, numpy array with shape=(len(P), len(instance set)), SP[k][i] ∈ {0,1} (0=incorrect, 1=correct)
     Output:
-        selected_idx: 抽样选中的候选在P中的索引
+        selected_idx: Index of the sampled candidate in P
     """
-    # 1. 构建每个实例i的最优候选集合P*[i]（论文1-86节步骤2-5）
-    num_instances = SP.shape[1]  # 实例总数
-    P_star = [[] for _ in range(num_instances)]  # P_star[i]为实例i的最优候选集合
+    # 1. Construct optimal candidate set P*[i] for each instance i (Steps 2-5 in Section 1-86 of the paper)
+    num_instances = SP.shape[1]  # Total number of instances
+    P_star = [[] for _ in range(num_instances)]  # P_star[i] is the optimal candidate set for instance i
     for i in range(num_instances):
-        # 对实例i，找到所有预测正确（SP[k][i]==1）的候选索引k
+        # For instance i, find indices of all candidates with correct predictions (SP[k][i] == 1)
         best_candidates_idx = np.where(SP[:, i] == 1)[0].tolist()
-        # 若所有候选均错误，保留全部候选（避免筛选中断，论文1-73节候选池保留逻辑）
+        # If all candidates are incorrect, retain all candidates (to avoid selection interruption, per candidate retention logic in Section 1-73 of the paper)
         if not best_candidates_idx:
             best_candidates_idx = list(range(len(P)))
-        P_star[i] = [P[k] for k in best_candidates_idx]  # 存储候选对象
+        P_star[i] = [P[k] for k in best_candidates_idx]  # Store candidate objects
     
-    # 2. 整合全局候选池C（论文1-86节步骤6-7：去重）
+    # 2. Integrate global candidate pool C (Steps 6-7 in Section 1-86: remove duplicates)
     C = []
     for candidates in P_star:
         for cand in candidates:
             if cand not in C:
                 C.append(cand)
-    # 剔除“在所有实例上均错误”的候选（论文1-86节隐含逻辑：保留有效策略）
+    # Remove candidates that are "incorrect on all instances" (implicit logic in Section 1-86: retain valid strategies)
     valid_candidates = []
     for cand in C:
         cand_idx = P.index(cand)
@@ -148,70 +148,70 @@ def SELECTCANDIDATE(P, SP):
             valid_candidates.append(cand)
     C = valid_candidates
     if not C:
-        return 0  # 极端情况：无有效候选，返回初始候选
+        return 0  # Extreme case: no valid candidates, return initial candidate
     
-    # 3. 剔除严格支配候选（论文1-86节步骤8-13）
-    D = []  # 存储被支配的候选
+    # 3. Remove strictly dominated candidates (Steps 8-13 in Section 1-86)
+    D = []  # Store dominated candidates
     for idx_x in range(len(C)):
         x = C[idx_x]
-        x_idx = P.index(x)  # x在原始候选池P中的索引
-        x_correct = set(np.where(SP[x_idx] == 1)[0].tolist())  # x的正确实例集合
-        # 检查x是否被其他候选支配
+        x_idx = P.index(x)  # Index of x in original candidate pool P
+        x_correct = set(np.where(SP[x_idx] == 1)[0].tolist())  # Set of instances where x is correct
+        # Check if x is dominated by other candidates
         is_dominated = False
         for idx_y in range(len(C)):
             if idx_x == idx_y:
                 continue
             y = C[idx_y]
             y_idx = P.index(y)
-            y_correct = set(np.where(SP[y_idx] == 1)[0].tolist())  # y的正确实例集合
-            # 支配条件：x的正确集合被y包含，且y有x未覆盖的正确实例（论文1-86节支配定义适配）
+            y_correct = set(np.where(SP[y_idx] == 1)[0].tolist())  # Set of instances where y is correct
+            # Domination condition: x's correct set is a subset of y's, and y has correct instances not covered by x (adapted from domination definition in Section 1-86)
             if x_correct.issubset(y_correct) and len(y_correct - x_correct) > 0:
                 is_dominated = True
                 break
         if is_dominated:
             D.append(x)
-    # 修剪候选池：移除被支配候选，得到ˆC（论文1-86节步骤13）
+    # Prune candidate pool: remove dominated candidates to get Ĉ (Step 13 in Section 1-86)
     C_hat = [cand for cand in C if cand not in D]
     if len(C_hat) == 1:
-        return P.index(C_hat[0])  # 仅1个候选，直接返回
+        return P.index(C_hat[0])  # Only 1 candidate, return directly
     
-    # 4. 按f[Φk]概率抽样（论文1-86节步骤14-16：f[Φk]为候选进入P*[i]的实例数）
+    # 4. Sample with probability proportional to f[Φk] (Steps 14-16 in Section 1-86: f[Φk] is the number of instances where the candidate enters P*[i])
     f = []
     for cand in C_hat:
         cand_idx = P.index(cand)
-        # f[Φk] = 候选在所有实例上正确的数量（即进入P*[i]的实例数）
+        # f[Φk] = number of instances where the candidate is correct (i.e., number of instances where it enters P*[i])
         f_k = np.sum(SP[cand_idx] == 1)
         f.append(f_k)
-    # 按f[k]正比抽样（如权重抽样）
+    # Sample proportionally to f[k] (e.g., weighted sampling)
     total_f = sum(f)
     probabilities = [fk / total_f for fk in f]
     selected_cand = np.random.choice(C_hat, p=probabilities)
     return P.index(selected_cand)
 
-# ------------------------------ 示例输入 ------------------------------
-# 1. 候选池P：3个视频异常检测的提示候选（描述核心逻辑，对应前文A/B/C）
+# ------------------------------ Example Input ------------------------------
+# 1. Candidate pool P: 3 prompt candidates for video anomaly detection (describing core logic, corresponding to A/B/C above)
 P = [
-    # 候选A：仅关注行为异常的肢体姿态变化
-    "提取异常特征时，仅聚焦连续帧中行人的肢体姿态变化，判定行为异常",
-    # 候选B：关注行为+物体异常的关键特征
-    "提取异常特征时，覆盖行人肢体姿态变化、物体结构完整性，判定行为/物体异常",
-    # 候选C：覆盖行为+物体+环境异常的全面特征
-    "提取异常特征时，包含肢体姿态、物体结构、环境光强/纹理变化，判定全类别异常"
+    # Candidate A: Focus only on limb posture changes for behavioral anomalies
+    "When extracting abnormal features, focus solely on limb posture changes of pedestrians in consecutive frames to determine behavioral anomalies",
+    # Candidate B: Focus on key features of behavioral + object anomalies
+    "When extracting abnormal features, cover pedestrian limb posture changes and object structural integrity to determine behavioral/object anomalies",
+    # Candidate C: Cover comprehensive features of behavioral + object + environmental anomalies
+    "When extracting abnormal features, include limb posture, object structure, and environmental light intensity/texture changes to determine all types of anomalies"
 ]
 
-# 2. 二值结果矩阵SP：shape=(3个候选, 5个实例)，SP[k][i]表示候选k在实例i上的预测结果（1=正确，0=错误）
-# 实例顺序：i=0(行为-跌倒)、i=1(行为-奔跑)、i=2(物体-货架坍塌)、i=3(环境-灯光骤暗)、i=4(环境-地面积水)
+# 2. Binary result matrix SP: shape=(3 candidates, 5 instances), where SP[k][i] indicates the prediction result of candidate k on instance i (1=correct, 0=incorrect)
+# Instance order: i=0 (behavioral-fall), i=1 (behavioral-running), i=2 (object-shelf collapse), i=3 (environmental-sudden dimming), i=4 (environmental-floor water)
 SP = np.array([
-    [1, 0, 0, 0, 0],  # 候选A：仅正确实例0
-    [1, 1, 1, 0, 0],  # 候选B：正确实例0、1、2
-    [1, 1, 1, 1, 1]   # 候选C：正确所有实例
+    [1, 0, 0, 0, 0],  # Candidate A: Correct only on instance 0
+    [1, 1, 1, 0, 0],  # Candidate B: Correct on instances 0, 1, 2
+    [1, 1, 1, 1, 1]   # Candidate C: Correct on all instances
 ])
 
-# ------------------------------ 函数调用与输出 ------------------------------
-np.random.seed(42)  # 固定随机种子，确保结果可复现
+# ------------------------------ Function Call & Output ------------------------------
+np.random.seed(42)  # Fix random seed for reproducibility
 selected_idx = SELECTCANDIDATE(P, SP)
-print(f"选中的候选索引：{selected_idx}")
-print(f"选中的候选提示：{P[selected_idx]}")
+print(f"Selected candidate index: {selected_idx}")
+print(f"Selected candidate prompt: {P[selected_idx]}")
 ```
 
 ##  5. Acknowledgements
