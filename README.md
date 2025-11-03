@@ -62,15 +62,8 @@ and the [mmcv documentation](https://mmcv.readthedocs.ihttps://arxiv.org/abs/200
 
 🔑 **Key Idea**
 
-Our Language-Vision Prior (LVP) combines:
 
-* Language Prior (LP): multi-prototype prompts capture class-level semantics and intra-class variance.
-
-* Vision Prior (VP): bi-directional masking encourages robust global-local reasoning.
-
-Together, they guide stable and reliable domain adaptation.
-
-**Overall Training Pseudocode**
+**Pareto Front-based candidate selection Training Pseudocode**
 
 ```python
 import numpy as np
@@ -177,7 +170,7 @@ print(f"Selected candidate prompt: {P[selected_idx]}")
 
 ##  5. Acknowledgements
 
-TIP is based on the following open-source projects. We thank their
+PRIME is based on the following open-source projects. We thank their
 authors for making the source code publicly available.
 
 * [VERA](https://github.com/vera-framework/VERA/tree/main)
