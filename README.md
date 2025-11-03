@@ -14,11 +14,6 @@ Kaige Li, Weiming Shi, and Xiaochun Cao*, IEEE Senior Member
   * [Future Work](#6-future-work)
 
 
-## Code Implementation Statement
-
-As discussed in [8](https://github.com/lhoyer/MIC/issues/8), [54](https://github.com/lhoyer/MIC/issues/54) and [63](https://github.com/lhoyer/MIC/issues/63), **our method inherits the instability of [MIC](https://github.com/lhoyer/MIC).** :cry:
-
-Note, however, that the mathematical expectation of performance is the same for both, i.e., **76.9%** mIoU and **69.9%** mIoU on GTAV→Cityscapes and SYNTHIA→Cityscapes, respectively. :100:
 
 ## 1. Introduction
 
@@ -27,69 +22,35 @@ Note, however, that the mathematical expectation of performance is the same for 
 
 ## 2. Environment Setup
 
-First, please install cuda version 11.0.3 available at [https://developer.nvidia.com/cuda-11-0-3-download-archive](https://developer.nvidia.com/cuda-11-0-3-download-archive). It is required to build mmcv-full later.
-
-For this project, we used python 3.8.5. We recommend setting up a new virtual
+For this project, we used python 3.10. We recommend setting up a new virtual
 environment:
 
 ```shell
-python -m venv ~/venv/LVP-UDASeg
-source ~/venv/LVP-UDASeg/bin/activate
+python -m venv ~/venv/PRIME-VAD
+source ~/venv/PRIME-VAD/bin/activate
 ```
 
 In that environment, the requirements can be installed with:
 
 ```shell
-pip install -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html
-pip install mmcv-full==1.3.7  # requires the other packages to be installed first
+conda create --name lavad python=3.10
+conda activate lavad
+pip install -r requirements.txt
 ```
 
-Further, please download the MiT weights from SegFormer using the
-following script. If problems occur with the automatic download, please follow
-the instructions for a manual download within the script.
-
-```shell
-sh tools/download_checkpoints.sh
-```
 
 ## 3. Dataset Setup
 
-**Cityscapes:** Please, download leftImg8bit_trainvaltest.zip and
-gt_trainvaltest.zip from [here](https://www.cityscapes-dataset.com/downloads/)
-and extract them to `data/cityscapes`.
 
-**GTA:** Please, download all image and label packages from
-[here](https://download.visinf.tu-darmstadt.de/data/from_games/) and extract
-them to `data/gta`.
+Please download the data, including captions, temporal summaries, indexes with their textual embeddings, and scores for the UCF-Crime and XD-Violence datasets, from the links below:
 
+| Dataset     | Link                                                                                               |
+| ----------- | -------------------------------------------------------------------------------------------------- |
+| UCF-Crime   | [Google Drive](https://drive.google.com/file/d/1_7juCgOoWjQruyH3S8_FBqajuRaORmnV/view?usp=sharing) |
+| XD-Violence | [Google Drive](https://drive.google.com/file/d/1yzDP1lVwPlA_BS2N5Byr1PcaazBklfkI/view?usp=sharing) |
 
-The final folder structure should look like this:
+and place them in the `/path/to/directory/datasets` folder. The code works with pre-extracted frames, which are not provided within the zipped files. You can download the videos from the official websites ([UCF-Crime](https://www.crcv.ucf.edu/projects/real-world/) and [XD-Violence](https://roc-ng.github.io/XD-Violence/)) and extract the frames yourself using a script similar to `scripts/00_extract_frames.sh`. Please note that you need to change the paths within the files included in the `annotations` folder of each dataset accordingly.
 
-```none
-LVP
-├── ...
-├── data
-│   ├── cityscapes
-│   │   ├── leftImg8bit
-│   │   │   ├── train
-│   │   │   ├── val
-│   │   ├── gtFine
-│   │   │   ├── train
-│   │   │   ├── val
-│   ├── gta
-│   │   ├── images
-│   │   ├── labels
-├── ...
-```
-
-**Data Preprocessing:** Finally, please run the following scripts to convert the label IDs to the
-train IDs and to generate the class index for RCS:
-
-```shell
-python tools/convert_datasets/gta.py data/gta --nproc 8
-python tools/convert_datasets/cityscapes.py data/cityscapes --nproc 8
-python tools/convert_datasets/synthia.py data/synthia/ --nproc 8
-```
 
 ## 4. Framework Structure
 
