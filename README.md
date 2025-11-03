@@ -180,9 +180,8 @@ print(f"Selected candidate prompt: {P[selected_idx]}")
 TIP is based on the following open-source projects. We thank their
 authors for making the source code publicly available.
 
-* [VERA]([https://github.com/lhoyer/DAFormer](https://github.com/vera-framework/VERA/tree/main))
-* [LAVAD ]([https://github.com/open-mmlab/mmsegmentation](https://github.com/lucazanella/lavad/tree/main))
-* [SegFormer](https://roc-ng.github.io/XD-Violence/)
+* [VERA](https://github.com/vera-framework/VERA/tree/main)
+* [LAVAD ](https://github.com/lucazanella/lavad/tree/main)
 
 
 
