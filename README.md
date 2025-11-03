@@ -54,10 +54,7 @@ and place them in the `/path/to/directory/datasets` folder. The code works with 
 
 ## 4. Framework Structure
 
-This project is based on [mmsegmentation version 0.16.0](https://github.com/open-mmlab/mmsegmentation/tree/v0.16.0).
-For more information about the framework structure and the config system,
-please refer to the [mmsegmentation documentation](https://mmsegmentation.readthedocs.io/en/latest/index.html)
-and the [mmcv documentation](https://mmcv.readthedocs.ihttps://arxiv.org/abs/2007.08702o/en/v1.3.7/index.html).
+ 🔥 Pending
 
 
 🔑 **Key Idea**
