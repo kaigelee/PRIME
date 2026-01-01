@@ -1,9 +1,5 @@
 # <p align=center>`PRIME for Video Anomaly Detection`</p><!-- omit in toc -->
 
-Kaige Li, Weiming Shi, and Xiaochun Cao*, IEEE Senior Member
-
-*Corresponding author: [Xiaochun Cao](https://scholar.google.com/citations?user=PDgp6OkAAAAJ&hl=en).
-
 ## Table of Contents
 
   * [Introduction](#1-introduction)
